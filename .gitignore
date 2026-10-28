@@ -1,0 +1,5 @@
+venv/
+pycache/
+.pytest_cache/
+*.pyc
+data/expenses.csv
