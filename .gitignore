@@ -5,3 +5,4 @@ __pycache__/
 .idea/
 *.pyc
 data/expenses.csv
+data/budgets.json
