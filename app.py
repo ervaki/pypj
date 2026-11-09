@@ -1,15 +1,6 @@
-import plotly.express as px
-
-from core.analysis import (
-    monthly_totals,
-    top_category,
-    change_from_previous_month,
-    daily_average,
-)
-from core.expenses import total_by_category
-
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 from core.dates import today_jalali, get_jalali_month
 from core.expenses import (
@@ -17,8 +8,21 @@ from core.expenses import (
     create_expense,
     filter_by_month,
     total_amount,
+    total_by_category,
 )
-from core.storage import load_expenses, add_expense
+from core.analysis import (
+    monthly_totals,
+    top_category,
+    change_from_previous_month,
+    daily_average,
+)
+from core.budget import (
+    set_budget,
+    total_budget,
+    budget_status,
+    over_budget_categories,
+)
+from core.storage import load_expenses, add_expense, load_budgets, save_budgets
 
 st.set_page_config(page_title="داشبورد هزینه‌ها", page_icon="💰", layout="wide")
 st.title("💰 داشبورد ثبت و تحلیل هزینه‌ها")
@@ -41,11 +45,27 @@ if submitted:
     except ValueError as e:
         st.sidebar.error(str(e))
 
+# ---------- فرم بودجه (سایدبار) ----------
+st.sidebar.divider()
+st.sidebar.header("تنظیم بودجه‌ی ماهانه")
+
+budgets = load_budgets()
+
+with st.sidebar.form("budget_form"):
+    b_category = st.selectbox("دسته", CATEGORIES, key="b_cat")
+    b_amount = st.number_input("سقف بودجه (تومان)", min_value=0, step=100000)
+    b_submitted = st.form_submit_button("ذخیره‌ی بودجه")
+
+if b_submitted:
+    budgets = set_budget(budgets, b_category, int(b_amount))
+    save_budgets(budgets)
+    st.sidebar.success("بودجه ذخیره شد ✅")
+
 # ---------- نمایش داده‌ها ----------
 expenses = load_expenses()
 
 if not expenses:
-    st.info("هنوز هزینه‌ای ثبت نشده. از فرم سمت راست/چپ اولین هزینه را ثبت کنید.")
+    st.info("هنوز هزینه‌ای ثبت نشده. از فرم کناری اولین هزینه را ثبت کنید.")
     st.stop()
 
 months = sorted({get_jalali_month(e["date"]) for e in expenses}, reverse=True)
@@ -104,3 +124,20 @@ right.plotly_chart(
     px.bar(bar_df, x="ماه", y="مبلغ", title="مقایسه‌ی ماه‌ها"),
     use_container_width=True,
 )
+
+# ---------- وضعیت بودجه ----------
+st.divider()
+st.subheader("وضعیت بودجه")
+
+if not budgets:
+    st.info("هنوز بودجه‌ای تنظیم نشده. از سایدبار تنظیم کنید.")
+else:
+    st.metric("بودجه‌ی کل ماه", f"{total_budget(budgets):,} تومان")
+
+    for cat in over_budget_categories(month_expenses, budgets):
+        st.warning(f"⚠️ بودجه‌ی «{cat}» از سقف عبور کرده است!")
+
+    status = budget_status(month_expenses, budgets)
+    for cat, info in status.items():
+        st.write(f"**{cat}**: {info['spent']:,} از {info['budget']:,} ({info['percent']}%)")
+        st.progress(min(info["percent"] / 100, 1.0))
