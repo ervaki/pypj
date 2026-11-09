@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+from core.export import to_csv_bytes, to_excel_bytes, to_pdf_bytes
 from core.dates import today_jalali, get_jalali_month
 from core.expenses import (
     CATEGORIES,
@@ -141,3 +142,27 @@ else:
     for cat, info in status.items():
         st.write(f"**{cat}**: {info['spent']:,} از {info['budget']:,} ({info['percent']}%)")
         st.progress(min(info["percent"] / 100, 1.0))
+
+        # ---------- خروجی داده ----------
+        st.divider()
+        st.subheader("خروجی داده")
+
+        e1, e2, e3 = st.columns(3)
+        e1.download_button(
+            "📄 دانلود CSV",
+            data=to_csv_bytes(month_expenses),
+            file_name=f"expenses_{selected_month}.csv",
+            mime="text/csv",
+        )
+        e2.download_button(
+            "📊 دانلود Excel",
+            data=to_excel_bytes(month_expenses),
+            file_name=f"expenses_{selected_month}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        e3.download_button(
+            "📕 دانلود PDF",
+            data=to_pdf_bytes(month_expenses, f"گزارش هزینه‌های {selected_month}"),
+            file_name=f"expenses_{selected_month}.pdf",
+            mime="application/pdf",
+        )
