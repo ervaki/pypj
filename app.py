@@ -1,3 +1,13 @@
+import plotly.express as px
+
+from core.analysis import (
+    monthly_totals,
+    top_category,
+    change_from_previous_month,
+    daily_average,
+)
+from core.expenses import total_by_category
+
 import streamlit as st
 import pandas as pd
 
@@ -58,3 +68,39 @@ df = df.rename(
     }
 )
 st.dataframe(df, use_container_width=True, hide_index=True)
+
+# ---------- تحلیل ماهانه ----------
+st.divider()
+st.subheader("تحلیل ماهانه")
+
+change = change_from_previous_month(expenses, selected_month)
+top = top_category(month_expenses)
+
+c1, c2, c3 = st.columns(3)
+c1.metric(
+    "تغییر نسبت به ماه قبل",
+    "—" if change is None else f"{change}%",
+)
+c2.metric(
+    "پرهزینه‌ترین دسته",
+    "—" if top is None else f"{top[0]} ({top[1]:,})",
+)
+c3.metric("میانگین روزانه", f"{daily_average(month_expenses):,} تومان")
+
+# ---------- نمودارها ----------
+st.subheader("نمودارها")
+left, right = st.columns(2)
+
+by_cat = total_by_category(month_expenses)
+pie_df = pd.DataFrame({"دسته": list(by_cat.keys()), "مبلغ": list(by_cat.values())})
+left.plotly_chart(
+    px.pie(pie_df, names="دسته", values="مبلغ", title="سهم هر دسته"),
+    use_container_width=True,
+)
+
+totals = monthly_totals(expenses)
+bar_df = pd.DataFrame({"ماه": list(totals.keys()), "مبلغ": list(totals.values())})
+right.plotly_chart(
+    px.bar(bar_df, x="ماه", y="مبلغ", title="مقایسه‌ی ماه‌ها"),
+    use_container_width=True,
+)
