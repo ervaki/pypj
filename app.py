@@ -29,18 +29,21 @@ from core.export import to_csv_bytes, to_excel_bytes, to_pdf_bytes
 st.set_page_config(page_title="داشبورد هزینه‌ها", page_icon="💰", layout="wide")
 inject_css()
 
-PALETTE = ["#4F46E5", "#7C3AED", "#06B6D4", "#10B981", "#F59E0B", "#EF4444", "#EC4899"]
+PALETTE = ["#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#F43F5E", "#EC4899", "#3B82F6"]
 
 
 def style_fig(fig):
     fig.update_layout(
+        template="plotly_dark",
         font_family="Vazirmatn",
+        font_color="#E5E7EB",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=10, r=10, t=50, b=10),
     )
+    fig.update_xaxes(gridcolor="rgba(255,255,255,0.08)")
+    fig.update_yaxes(gridcolor="rgba(255,255,255,0.08)")
     return fig
-
 
 # ---------- بنر ----------
 st.markdown(
