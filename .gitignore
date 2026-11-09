@@ -1,5 +1,7 @@
 venv/
+.venv/
 __pycache__/
 .pytest_cache/
+.idea/
 *.pyc
-data/expenses.csv.idea/
+data/expenses.csv
